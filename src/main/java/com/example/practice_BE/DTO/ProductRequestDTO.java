@@ -1,9 +1,15 @@
 package com.example.practice_BE.DTO;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 public class ProductRequestDTO {
 
+    @NotBlank(message = "กรุณาใส่ชื่อสินค้า")
     private String productName;
+    @NotNull(message = "กรุณาใส่ราคาสินค้า")
     private Double productPrice;
+    @NotNull(message = "กรุณาใส่จำนวนสินค้า")
     private Integer productAmount;
 
     public ProductRequestDTO(String productName, Double productPrice, Integer productAmount) {

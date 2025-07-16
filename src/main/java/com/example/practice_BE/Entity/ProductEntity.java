@@ -12,7 +12,7 @@ public class ProductEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
-    private Integer productId;
+    private Long productId;
 
     @JsonProperty("productDate")
     @Column(name = "product_date")
@@ -34,11 +34,11 @@ public class ProductEntity {
     @Column(name = "token_id")
     private String tokenId;
 
-    public Integer getProductId() {
+    public Long getProductId() {
         return productId;
     }
 
-    public void setProductId(Integer productId) {
+    public void setProductId(Long productId) {
         this.productId = productId;
     }
 
