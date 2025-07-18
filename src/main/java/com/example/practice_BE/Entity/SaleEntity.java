@@ -27,7 +27,7 @@ public class SaleEntity {
     @Column(name = "sale_total")
     private Double saleTotal;
 
-    @OneToMany(mappedBy = "saleId", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "saleId", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<SaleDetailEntity> saleDetails;
 
     public Double getSaleTotal() {

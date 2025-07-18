@@ -2,6 +2,7 @@ package com.example.practice_BE.Controllers;
 
 import com.example.practice_BE.DTO.SaleDetailRequestDTO;
 import com.example.practice_BE.Entity.SaleEntity;
+import com.example.practice_BE.Repository.SaleRepository;
 import com.example.practice_BE.Service.SaleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/sales")
 public class SaleController {
 
     private final SaleService saleService;
@@ -20,7 +21,7 @@ public class SaleController {
         this.saleService = saleService;
     }
 
-    @PostMapping("/sales")
+    @PostMapping("/create")
     public ResponseEntity<?> createSale(@RequestBody List<SaleDetailRequestDTO> saleDetails) {
         try {
             SaleEntity sale = saleService.createSale(saleDetails);
@@ -29,6 +30,16 @@ public class SaleController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("เกิดข้อผิดพลาดขณะทำรายการ: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SaleEntity> getSaleById(@PathVariable Long id) {
+        try {
+            SaleEntity sale = saleService.getSaleById(id);
+            return ResponseEntity.ok(sale);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

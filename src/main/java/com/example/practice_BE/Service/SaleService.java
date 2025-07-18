@@ -85,6 +85,16 @@ public class SaleService {
         }
     }
 
+    public SaleEntity getSaleById(Long id) {
+        SaleEntity sale = saleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sale not found"));
+
+        // Force fetch saleDetails
+        sale.getSaleDetails().size(); // บังคับให้ Hibernate ดึงข้อมูลจาก DB
+
+        return sale;
+    }
+
     private void validateSaleDetail(List<SaleDetailRequestDTO> saleDetails){
         for (SaleDetailRequestDTO dto : saleDetails) {
             ProductEntity product = productService.findById(dto.getProductId());

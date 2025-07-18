@@ -25,7 +25,7 @@ public class SaleDetailService {
         saleDetailRepository.deleteById(id);
     }
 
-    
+
     public int getTotalQuantityByProduct(Long productId) {
         return saleDetailRepository.findAll().stream()
                 .filter(detail -> detail.getProductId().getProductId().equals(productId))

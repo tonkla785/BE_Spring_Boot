@@ -1,5 +1,6 @@
 package com.example.practice_BE.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ public class SaleDetailEntity {
     @ManyToOne
     @JoinColumn(name = "sale_id")
     @JsonIgnoreProperties("saleDetails")
+    @JsonIgnore
     private SaleEntity saleId;
 
     @ManyToOne
