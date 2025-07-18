@@ -15,7 +15,7 @@ import java.util.UUID;
 @Service
 public class ProductService{
 
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
     @Autowired
     public ProductService(ProductRepository productRepository) {
@@ -51,7 +51,7 @@ public class ProductService{
     }
 
     //Get by ID Service
-    public ProductEntity findById(Integer id) {
+    public ProductEntity findById(Long id) {
         try {
             return productRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Product with ID " + id + " not found"));
@@ -63,7 +63,7 @@ public class ProductService{
     }
 
     //Update service
-    public ProductEntity updateProduct(Integer id, ProductRequestDTO request) {
+    public ProductEntity updateProduct(Long id, ProductRequestDTO request) {
         try {
             ProductEntity productEntity = productRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("ไม่พบสินค้า ID: " + id));
@@ -82,7 +82,7 @@ public class ProductService{
     }
 
     //Delete service
-    public void deleteProduct(Integer id) {
+    public void deleteProduct(Long id) {
         try {
             ProductEntity product = productRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("ไม่พบสินค้า ID: " + id));

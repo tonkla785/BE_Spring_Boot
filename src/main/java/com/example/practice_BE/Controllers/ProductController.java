@@ -64,7 +64,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProduct(@PathVariable Integer id){
+    public ResponseEntity<?> getProduct(@PathVariable long id){
         try {
             ProductEntity product = productService.findById(id);
             return ResponseEntity.status(HttpStatus.OK).body(Map.of(
@@ -86,7 +86,7 @@ public class ProductController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable Integer id,@Valid @RequestBody ProductRequestDTO request) {
+    public ResponseEntity<?> updateProduct(@PathVariable Long id,@Valid @RequestBody ProductRequestDTO request) {
         try {
             ProductEntity updated = productService.updateProduct(id, request);
             return ResponseEntity.ok(Map.of(
@@ -113,7 +113,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteProduct(@PathVariable Integer id){
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id){
         try{
             productService.deleteProduct(id);
             return ResponseEntity.ok(Map.of(
