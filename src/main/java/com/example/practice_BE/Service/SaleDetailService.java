@@ -5,8 +5,6 @@ import com.example.practice_BE.Repository.SaleDetailRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class SaleDetailService {
 
@@ -16,15 +14,6 @@ public class SaleDetailService {
     public SaleDetailService(SaleDetailRepository saleDetailRepository) {
         this.saleDetailRepository = saleDetailRepository;
     }
-
-    public SaleDetailEntity save(SaleDetailEntity detail) {
-        return saleDetailRepository.save(detail);
-    }
-
-    public void delete(Long id) {
-        saleDetailRepository.deleteById(id);
-    }
-
 
     public int getTotalQuantityByProduct(Long productId) {
         return saleDetailRepository.findAll().stream()

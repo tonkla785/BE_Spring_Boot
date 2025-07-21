@@ -1,12 +1,8 @@
 package com.example.practice_BE.DTO;
 
-import jakarta.validation.constraints.NotNull;
-
 public class SaleDetailRequestDTO {
 
-    @NotNull(message = "กรุณาเลือกสินค้า")
     private Long productId;
-    @NotNull(message = "กรุณาใส่จำนวนสินค้า")
     private Integer quantity;
 
     public SaleDetailRequestDTO(Long productId, Integer quantity) {
@@ -19,6 +15,9 @@ public class SaleDetailRequestDTO {
     }
 
     public void setQuantity(Integer quantity) {
+        if (quantity == null) {
+            throw new IllegalArgumentException("Quantity can not be null");
+        }
         this.quantity = quantity;
     }
 
@@ -27,6 +26,9 @@ public class SaleDetailRequestDTO {
     }
 
     public void setProductId(Long productId) {
+        if (productId == null) {
+            throw new IllegalArgumentException("Product ID is required.");
+        }
         this.productId = productId;
     }
 }

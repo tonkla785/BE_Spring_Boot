@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -53,9 +52,12 @@ public class ProductService{
     //Get by ID Service
     public ProductEntity findById(Long id) {
         try {
+            if(id == null){
+                throw new IllegalArgumentException("Product id can not be null");
+            }
             return productRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("Product with ID " + id + " not found"));
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException | IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error while searching for product", e);
@@ -91,21 +93,18 @@ public class ProductService{
             throw e;
         } catch (Exception e){
         throw new RuntimeException("Error while deleting product",e);
-    }
+        }
     }
 
     //Validate
     private void validateProduct(ProductRequestDTO productRequest){
         if(productRequest == null){
             throw new IllegalArgumentException("Product cannot be null");
-        }
-        if(productRequest.getProductName() == null || productRequest.getProductName().trim().isEmpty()){
+        } else if(productRequest.getProductName() == null || productRequest.getProductName().trim().isEmpty()){
             throw new IllegalArgumentException("Product name cannot be null or empty");
-        }
-        if(productRequest.getProductPrice() == null || productRequest.getProductPrice() < 0){
+        } else if(productRequest.getProductPrice() == null || productRequest.getProductPrice() < 0){
             throw new IllegalArgumentException("Product price cannot be null or empty or minus");
-        }
-        if(productRequest.getProductAmount() == null || productRequest.getProductAmount() < 0){
+        } else if(productRequest.getProductAmount() == null || productRequest.getProductAmount() < 0){
             throw new IllegalArgumentException("Product amount cannot be null or empty or minus");
         }
     }

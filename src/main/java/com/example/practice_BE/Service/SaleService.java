@@ -33,11 +33,13 @@ public class SaleService {
         this.productService = productService;
     }
 
+    //create bill
     @Transactional
     public SaleEntity createSale(List<SaleDetailRequestDTO> saleDetails){
         try {
-            double total = 0.0;
             validateSaleDetail(saleDetails);
+
+            double total = 0.0;
 
             SaleEntity sale = new SaleEntity();
             sale.setSaleTokenId(UUID.randomUUID().toString());
@@ -47,12 +49,8 @@ public class SaleService {
 
             for (SaleDetailRequestDTO dto : saleDetails) {
                 ProductEntity product = productService.findById(dto.getProductId());
-                System.out.println(product);
 
                 product.setProductAmount(product.getProductAmount()-dto.getQuantity());
-                System.out.println("กำลังลด stock: " + product.getProductName());
-                System.out.println("จำนวนคงเหลือ: " + product.getProductAmount());
-                System.out.println("จำนวนที่ขาย: " + dto.getQuantity());
                 productService.updateProduct(product.getProductId(),
                         new ProductRequestDTO(
                                 product.getProductName(),
@@ -66,15 +64,12 @@ public class SaleService {
                 detail.setProductId(product);
                 detail.setQuantitySale(dto.getQuantity());
 
-
                 double price = product.getProductPrice() * dto.getQuantity();
                 detail.setPriceSale(price);
                 total += price;
-                System.out.println(total);
 
                 saleDetailRepository.save(detail);
             }
-
             sale.setSaleTotal(total);
             saleRepository.save(sale);
             return sale;
@@ -85,31 +80,155 @@ public class SaleService {
         }
     }
 
-    public SaleEntity getSaleById(Long id) {
-        SaleEntity sale = saleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sale not found"));
-
-        // Force fetch saleDetails
-        sale.getSaleDetails().size(); // บังคับให้ Hibernate ดึงข้อมูลจาก DB
-
-        return sale;
+    //Get All bill
+    public List<SaleEntity> findAll(){
+        try {
+            return saleRepository.findAll();
+        }catch (Exception e){
+            throw new RuntimeException("Error while Searching",e);
+        }
     }
 
+
+    //Get bill by id
+    public SaleEntity getSaleById(Long id) {
+        try {
+            SaleEntity sale = saleRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Bill with ID "+id+" not found"));
+            sale.getSaleDetails().size();
+            return sale;
+        } catch (NoSuchElementException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error while searching for Bill",e);
+        }
+
+    }
+
+    //Update bill
+    @Transactional
+    public SaleEntity updateSale(Long id, List<SaleDetailRequestDTO> updatedDetails){
+        try {
+            SaleEntity sale = saleRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("ไม่พบ Sale ID: " + id));
+
+            validateSaleDetail(updatedDetails);
+
+            List<SaleDetailEntity> existingDetails = sale.getSaleDetails();
+            double newTotal = 0.0;
+
+            for (int i = 0; i < existingDetails.size(); i++) {
+                SaleDetailEntity existing = existingDetails.get(i);
+
+                boolean stillExists = updatedDetails.stream()
+                        .anyMatch(dto -> dto.getProductId().equals(existing.getProductId().getProductId()));
+
+                if (!stillExists) {
+                    ProductEntity product = existing.getProductId();
+                    product.setProductAmount(product.getProductAmount() + existing.getQuantitySale());
+                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
+                            product.getProductName(),
+                            product.getProductPrice(),
+                            product.getProductAmount()
+                    ));
+
+                    saleDetailRepository.delete(existing);
+                    existingDetails.remove(i);
+                    i--;
+                }
+            }
+
+            for (SaleDetailRequestDTO dto : updatedDetails) {
+                ProductEntity product = productService.findById(dto.getProductId());
+
+                SaleDetailEntity existingDetail = existingDetails.stream()
+                        .filter(d -> d.getProductId().getProductId().equals(dto.getProductId()))
+                        .findFirst()
+                        .orElse(null);
+
+                int newQty = dto.getQuantity();
+
+                if (existingDetail != null) {
+                    int diff = newQty - existingDetail.getQuantitySale();
+                    if (product.getProductAmount() < diff) {
+                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName());
+                    }
+
+                    product.setProductAmount(product.getProductAmount() - diff);
+                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
+                            product.getProductName(),
+                            product.getProductPrice(),
+                            product.getProductAmount()
+                    ));
+
+                    existingDetail.setQuantitySale(newQty);
+                    existingDetail.setPriceSale(newQty * product.getProductPrice());
+                    saleDetailRepository.save(existingDetail);
+
+                    newTotal += existingDetail.getPriceSale();
+                } else {
+                    if (product.getProductAmount() < newQty) {
+                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName());
+                    }
+
+                    product.setProductAmount(product.getProductAmount() - newQty);
+                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
+                            product.getProductName(),
+                            product.getProductPrice(),
+                            product.getProductAmount()
+                    ));
+
+                    SaleDetailEntity newDetail = new SaleDetailEntity();
+                    newDetail.setSaleId(sale);
+                    newDetail.setProductId(product);
+                    newDetail.setQuantitySale(newQty);
+                    newDetail.setPriceSale(newQty * product.getProductPrice());
+
+                    saleDetailRepository.save(newDetail);
+                    existingDetails.add(newDetail);
+
+                    newTotal += newDetail.getPriceSale();
+                }
+            }
+
+            sale.setSaleTotal(newTotal);
+            saleRepository.save(sale);
+
+            return sale;
+        }catch (NoSuchElementException | IllegalArgumentException e){
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error while updating Bill",e);
+        }
+    }
+
+    //Delete bill
+    public void deleteSale(Long id) {
+        try {
+            SaleEntity sale = saleRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("ไม่พบบิล ID: " + id));
+            saleRepository.delete(sale);
+        } catch (NoSuchElementException e) {
+            throw e;
+        } catch (Exception e){
+            throw new RuntimeException("Error while deleting Bill",e);
+        }
+    }
+
+    //Validate stock
     private void validateSaleDetail(List<SaleDetailRequestDTO> saleDetails){
         for (SaleDetailRequestDTO dto : saleDetails) {
             ProductEntity product = productService.findById(dto.getProductId());
 
             if (product == null) {
-                throw new IllegalArgumentException("Product ID " + dto.getProductId() + " ไม่พบในระบบ");
-            }
-
-            if (dto.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Product name " + dto.getProductId() + " ไม่พบในระบบ");
+            } else if (dto.getQuantity() == null || dto.getQuantity() < 0 ) {
                 throw new IllegalArgumentException("จำนวนที่สั่งซื้อของสินค้า " + product.getProductName() + " ต้องมากกว่า 0");
-            }
-
-            if (product.getProductAmount() < dto.getQuantity()) {
+            } else if (product.getProductAmount() < dto.getQuantity()) {
                 throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName() +
                         " (เหลืออยู่: " + product.getProductAmount() + ")");
+            } else if (dto.getProductId() == null) {
+                throw new IllegalArgumentException("Product id can not be null");
             }
         }
     }

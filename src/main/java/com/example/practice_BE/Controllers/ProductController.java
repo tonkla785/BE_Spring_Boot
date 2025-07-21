@@ -25,7 +25,7 @@ public class ProductController {
     }
 
     @PostMapping("/product")
-    public ResponseEntity<?> addProduct(@Valid @RequestBody ProductRequestDTO productRequest){
+    public ResponseEntity<?> addProduct(@RequestBody ProductRequestDTO productRequest){
         try {
             ProductEntity createproduct = productService.createProduct(productRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
@@ -86,7 +86,7 @@ public class ProductController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id,@Valid @RequestBody ProductRequestDTO request) {
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody ProductRequestDTO request) {
         try {
             ProductEntity updated = productService.updateProduct(id, request);
             return ResponseEntity.ok(Map.of(
