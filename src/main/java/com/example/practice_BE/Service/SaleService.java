@@ -1,10 +1,10 @@
 package com.example.practice_BE.Service;
 
-import com.example.practice_BE.DTO.ProductRequestDTO;
 import com.example.practice_BE.DTO.SaleDetailRequestDTO;
 import com.example.practice_BE.Entity.ProductEntity;
 import com.example.practice_BE.Entity.SaleDetailEntity;
 import com.example.practice_BE.Entity.SaleEntity;
+import com.example.practice_BE.Repository.ProductRepository;
 import com.example.practice_BE.Repository.SaleDetailRepository;
 import com.example.practice_BE.Repository.SaleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -22,15 +23,18 @@ public class SaleService {
     private final SaleRepository saleRepository;
     private final SaleDetailRepository saleDetailRepository;
     private final ProductService productService;
+    private final ProductRepository productRepository;
 
     @Autowired
     public SaleService(SaleRepository saleRepository,
                        SaleDetailRepository saleDetailRepository,
-                       ProductService productService
+                       ProductService productService,
+                       ProductRepository productRepository
                        ){
         this.saleRepository = saleRepository;
         this.saleDetailRepository = saleDetailRepository;
         this.productService = productService;
+        this.productRepository = productRepository;
     }
 
     //create bill
@@ -40,6 +44,7 @@ public class SaleService {
             validateSaleDetail(saleDetails);
 
             double total = 0.0;
+            List<SaleDetailEntity> detailEntities = new ArrayList<>();
 
             SaleEntity sale = new SaleEntity();
             sale.setSaleTokenId(UUID.randomUUID().toString());
@@ -47,17 +52,18 @@ public class SaleService {
             sale.setSaleTotal(total);
             saleRepository.save(sale);
 
+            List<ProductEntity> updatedProducts = new ArrayList<>();
+
             for (SaleDetailRequestDTO dto : saleDetails) {
                 ProductEntity product = productService.findById(dto.getProductId());
 
+                if (product.getProductAmount() < dto.getQuantity()) {
+                    throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName() +
+                            " (เหลืออยู่: " + product.getProductAmount() + ")");
+                }
+
                 product.setProductAmount(product.getProductAmount()-dto.getQuantity());
-                productService.updateProduct(product.getProductId(),
-                        new ProductRequestDTO(
-                                product.getProductName(),
-                                product.getProductPrice(),
-                                product.getProductAmount()
-                            )
-                        );
+                updatedProducts.add(product);
 
                 SaleDetailEntity detail = new SaleDetailEntity();
                 detail.setSaleId(sale);
@@ -68,10 +74,15 @@ public class SaleService {
                 detail.setPriceSale(price);
                 total += price;
 
-                saleDetailRepository.save(detail);
+                detailEntities.add(detail);
             }
+
+            productRepository.saveAll(updatedProducts);
+            saleDetailRepository.saveAll(detailEntities);
+
             sale.setSaleTotal(total);
             saleRepository.save(sale);
+
             return sale;
         }catch (IllegalArgumentException | NoSuchElementException e) {
             throw e;
@@ -115,6 +126,10 @@ public class SaleService {
             validateSaleDetail(updatedDetails);
 
             List<SaleDetailEntity> existingDetails = sale.getSaleDetails();
+            List<ProductEntity> productsToUpdate = new ArrayList<>();
+            List<SaleDetailEntity> detailsToUpdate = new ArrayList<>();
+            List<SaleDetailEntity> detailsToAdd = new ArrayList<>();
+
             double newTotal = 0.0;
 
             for (int i = 0; i < existingDetails.size(); i++) {
@@ -126,11 +141,7 @@ public class SaleService {
                 if (!stillExists) {
                     ProductEntity product = existing.getProductId();
                     product.setProductAmount(product.getProductAmount() + existing.getQuantitySale());
-                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
-                            product.getProductName(),
-                            product.getProductPrice(),
-                            product.getProductAmount()
-                    ));
+                    productsToUpdate.add(product);
 
                     saleDetailRepository.delete(existing);
                     existingDetails.remove(i);
@@ -147,36 +158,33 @@ public class SaleService {
                         .orElse(null);
 
                 int newQty = dto.getQuantity();
+                int oldQty = existingDetail != null ? existingDetail.getQuantitySale() : 0;
+                int availableStock = product.getProductAmount()+oldQty;
 
                 if (existingDetail != null) {
-                    int diff = newQty - existingDetail.getQuantitySale();
-                    if (product.getProductAmount() < diff) {
-                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName());
+                    int diff = newQty - oldQty;
+
+                    if (availableStock < newQty) {
+                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName() +
+                                " (เหลืออยู่: " + availableStock + ")");
                     }
 
                     product.setProductAmount(product.getProductAmount() - diff);
-                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
-                            product.getProductName(),
-                            product.getProductPrice(),
-                            product.getProductAmount()
-                    ));
+                    productsToUpdate.add(product);
 
                     existingDetail.setQuantitySale(newQty);
                     existingDetail.setPriceSale(newQty * product.getProductPrice());
-                    saleDetailRepository.save(existingDetail);
+                    detailsToUpdate.add(existingDetail);
 
                     newTotal += existingDetail.getPriceSale();
                 } else {
-                    if (product.getProductAmount() < newQty) {
-                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName());
+                    if (availableStock < newQty) {
+                        throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName() +
+                                " (เหลืออยู่: " + availableStock + ")");
                     }
 
                     product.setProductAmount(product.getProductAmount() - newQty);
-                    productService.updateProduct(product.getProductId(), new ProductRequestDTO(
-                            product.getProductName(),
-                            product.getProductPrice(),
-                            product.getProductAmount()
-                    ));
+                    productsToUpdate.add(product);
 
                     SaleDetailEntity newDetail = new SaleDetailEntity();
                     newDetail.setSaleId(sale);
@@ -184,12 +192,16 @@ public class SaleService {
                     newDetail.setQuantitySale(newQty);
                     newDetail.setPriceSale(newQty * product.getProductPrice());
 
-                    saleDetailRepository.save(newDetail);
+                    detailsToAdd.add(newDetail);
                     existingDetails.add(newDetail);
 
                     newTotal += newDetail.getPriceSale();
                 }
             }
+
+            productRepository.saveAll(productsToUpdate);
+            saleDetailRepository.saveAll(detailsToUpdate);
+            saleDetailRepository.saveAll(detailsToAdd);
 
             sale.setSaleTotal(newTotal);
             saleRepository.save(sale);
@@ -203,15 +215,31 @@ public class SaleService {
     }
 
     //Delete bill
+    @Transactional
     public void deleteSale(Long id) {
         try {
             SaleEntity sale = saleRepository.findById(id)
                     .orElseThrow(() -> new NoSuchElementException("ไม่พบบิล ID: " + id));
+
+            List<SaleDetailEntity> saleDetails = sale.getSaleDetails();
+            List<ProductEntity> productsToUpdate = new ArrayList<>();
+
+            for (SaleDetailEntity detail : saleDetails) {
+                ProductEntity product = detail.getProductId();
+                int quantity = detail.getQuantitySale();
+
+                product.setProductAmount(product.getProductAmount() + quantity);
+
+                productsToUpdate.add(product);
+            }
+
+            productRepository.saveAll(productsToUpdate);
             saleRepository.delete(sale);
+
         } catch (NoSuchElementException e) {
             throw e;
         } catch (Exception e){
-            throw new RuntimeException("Error while deleting Bill",e);
+            throw new RuntimeException("Error while deleting Bill", e);
         }
     }
 
@@ -222,11 +250,8 @@ public class SaleService {
 
             if (product == null) {
                 throw new IllegalArgumentException("Product name " + dto.getProductId() + " ไม่พบในระบบ");
-            } else if (dto.getQuantity() == null || dto.getQuantity() < 0 ) {
+            } else if (dto.getQuantity() == null || dto.getQuantity() <= 0 ) {
                 throw new IllegalArgumentException("จำนวนที่สั่งซื้อของสินค้า " + product.getProductName() + " ต้องมากกว่า 0");
-            } else if (product.getProductAmount() < dto.getQuantity()) {
-                throw new IllegalArgumentException("Stock ไม่พอสำหรับสินค้า " + product.getProductName() +
-                        " (เหลืออยู่: " + product.getProductAmount() + ")");
             } else if (dto.getProductId() == null) {
                 throw new IllegalArgumentException("Product id can not be null");
             }
