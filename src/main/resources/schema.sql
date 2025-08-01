@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS products(
 CREATE TABLE IF NOT EXISTS sales (
     sale_id SERIAL PRIMARY KEY,
     sale_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sale_name VARCHAR(250),
     sale_token_id VARCHAR(1000),
     sale_total DECIMAL(10, 2) NOT NULL
 );

@@ -4,10 +4,23 @@ public class SaleDetailRequestDTO {
 
     private Long productId;
     private Integer quantity;
+    private String billName;
 
     public SaleDetailRequestDTO(Long productId, Integer quantity) {
         this.productId = productId;
         this.quantity = quantity;
+        this.billName = billName;
+    }
+
+    public String getBillName() {
+        return billName;
+    }
+
+    public void setBillName(String billName) {
+        if (billName == null) {
+            throw new IllegalArgumentException("bill name can not be null");
+        }
+        this.billName = billName;
     }
 
     public Integer getQuantity() {

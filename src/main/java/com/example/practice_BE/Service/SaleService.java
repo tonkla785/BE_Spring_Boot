@@ -74,6 +74,8 @@ public class SaleService {
                 detail.setPriceSale(price);
                 total += price;
 
+                sale.setSaleName(dto.getBillName());
+
                 detailEntities.add(detail);
             }
 
@@ -114,6 +116,15 @@ public class SaleService {
             throw new RuntimeException("Error while searching for Bill",e);
         }
 
+    }
+
+    //Find Bill by name
+    public List<SaleEntity> searchSalesByName(String keyword) {
+        try{
+            return saleRepository.findBySaleNameContainingIgnoreCase(keyword);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while searching for Bill",e);
+        }
     }
 
     //Update bill
@@ -197,6 +208,8 @@ public class SaleService {
 
                     newTotal += newDetail.getPriceSale();
                 }
+
+                sale.setSaleName(dto.getBillName());
             }
 
             productRepository.saveAll(productsToUpdate);
@@ -243,7 +256,7 @@ public class SaleService {
         }
     }
 
-    //Validate stock
+    //Validate sale
     private void validateSaleDetail(List<SaleDetailRequestDTO> saleDetails){
         for (SaleDetailRequestDTO dto : saleDetails) {
             ProductEntity product = productService.findById(dto.getProductId());
@@ -254,6 +267,8 @@ public class SaleService {
                 throw new IllegalArgumentException("จำนวนที่สั่งซื้อของสินค้า " + product.getProductName() + " ต้องมากกว่า 0");
             } else if (dto.getProductId() == null) {
                 throw new IllegalArgumentException("Product id can not be null");
+            } else if (dto.getBillName() == null || dto.getBillName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Bill name cannot be null or empty");
             }
         }
     }

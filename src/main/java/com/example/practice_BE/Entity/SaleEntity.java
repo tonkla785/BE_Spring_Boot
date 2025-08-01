@@ -23,12 +23,24 @@ public class SaleEntity {
     @Column(name = "sale_date")
     private Timestamp saleDate;
 
+    @JsonProperty("saleName")
+    @Column(name = "sale_name")
+    private String saleName;
+
     @JsonProperty("saleTotal")
     @Column(name = "sale_total")
     private Double saleTotal;
 
     @OneToMany(mappedBy = "saleId", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     private List<SaleDetailEntity> saleDetails;
+
+    public String getSaleName() {
+        return saleName;
+    }
+
+    public void setSaleName(String saleName) {
+        this.saleName = saleName;
+    }
 
     public Double getSaleTotal() {
         return saleTotal;

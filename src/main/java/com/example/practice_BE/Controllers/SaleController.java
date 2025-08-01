@@ -73,6 +73,23 @@ public class SaleController {
         }
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<?> searchSales(@RequestParam("keyword") String keyword) {
+        try {
+            List<SaleEntity> Sale = saleService.searchSalesByName(keyword);
+            return ResponseEntity.ok(Map.of(
+                    "responseStatus", 200,
+                    "responseMessage", "ดึงข้อมูลบิลสำเร็จ",
+                    "data", Sale
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "responseStatus", 500,
+                    "responseMessage", "เกิดข้อผิดพลาดในระบบ"
+            ));
+        }
+    }
+
     @GetMapping("/")
     public ResponseEntity<?> getAllBill() {
         try {
@@ -116,6 +133,8 @@ public class SaleController {
             ));
         }
     }
+
+
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteSale(@PathVariable Long id){
