@@ -3,7 +3,6 @@ package com.example.practice_BE.Controllers;
 import com.example.practice_BE.DTO.SaleDetailRequestDTO;
 import com.example.practice_BE.Entity.SaleEntity;
 import com.example.practice_BE.Service.SaleService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
