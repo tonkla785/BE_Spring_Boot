@@ -1,10 +1,10 @@
-# 📦 BE_Spring_Boot (Spring Boot Project)
+# BE_Spring_Boot (Spring Boot Project)
 
 A [Spring Boot](https://spring.io/projects/spring-boot) project built with Java 21, PostgreSQL, and Docker. This project provides a backend API for managing sales and products, with validation and stock management logic.
 
 ---
 
-## 🚀 Features
+## Features
 
 - Built with **Spring Boot 3.5.3**
 - RESTful APIs using **Spring Web**
@@ -16,7 +16,7 @@ A [Spring Boot](https://spring.io/projects/spring-boot) project built with Java 
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Technology       | Version     |
 |------------------|-------------|
@@ -28,7 +28,7 @@ A [Spring Boot](https://spring.io/projects/spring-boot) project built with Java 
 
 ---
 
-## 📂 Project Structure
+## Project Structure
     practice-BE/
     ├── src/
     ├── docker-compose.yaml
@@ -38,7 +38,7 @@ A [Spring Boot](https://spring.io/projects/spring-boot) project built with Java 
 
 ---
 
-## 🐳 Docker Setup
+## Docker Setup
 
 ### 1. Prerequisites
 
@@ -61,7 +61,7 @@ pgAdmin at http://127.0.0.1:5050/
 - Password: admin
 
 ---
-# 🧪 Run the Application
+# Run the Application
 ### 1. Clone the project
 ```bash
 git clone https://github.com/tonkla785/BE_Spring_Boot.git
@@ -84,7 +84,7 @@ spring.sql.init.mode=always
 
 ---
 
-# 📘 API Documentation
+# API Documentation
 Once the app is running visit:
 
 - http://localhost:8080/swagger-ui/index.html
