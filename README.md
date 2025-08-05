@@ -1,4 +1,4 @@
-# BE_Spring_Boot (Spring Boot Project)
+# StoreManagement_BE (Spring Boot Project)
 
 A [Spring Boot](https://spring.io/projects/spring-boot) project built with Java 21, PostgreSQL, and Docker. This project provides a backend API for managing sales and products, with validation and stock management logic.
 
